@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Heritage Storytelling Agent - Bringing History to Life through AI-powered transcription, translation, and narration">
+    <meta name="author" content="Heritage Storytelling Agent">
+    <meta name="keywords" content="heritage, storytelling, transcription, translation, narration, history, manuscripts, AI">
+    <meta name="theme-color" content="#8B1A1A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Heritage Storytelling Agent</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <p class="loading-text">Unraveling the past…</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-ornament top-ornament">
+            <span class="ornament-line"></span>
+            <i class="fas fa-landmark ornament-icon"></i>
+            <span class="ornament-line"></span>
+        </div>
+        <div class="header-content">
+            <div class="header-emblem">
+                <i class="fas fa-scroll"></i>
+            </div>
+            <h1 class="site-title">Heritage Storytelling Agent</h1>
+            <p class="site-subtitle">Bringing History to Life &middot; Powered by Sarvam AI</p>
+            <p class="site-tagline">Oral Archives &amp; Manuscripts &middot; Saaras Speech-to-Text &middot; Mayura Translation &middot; Sarvam-105b Stories &middot; Bulbul Voice Narration</p>
+        </div>
+        <div class="header-ornament bottom-ornament">
+            <span class="ornament-line"></span>
+            <i class="fas fa-feather-pointed ornament-icon"></i>
+            <span class="ornament-line"></span>
+        </div>
+        <!-- Header Actions -->
+        <div class="header-actions">
+            <button id="btn-api-key" class="btn btn-sm btn-outline header-action-btn" title="Configure Sarvam AI Key" aria-label="Configure Sarvam AI Key">
+                <i class="fas fa-key"></i> <span id="api-key-status-text">Sarvam Key</span>
+            </button>
+            <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- API Key Settings Modal -->
+    <dialog id="api-key-dialog" class="heritage-dialog">
+        <div class="dialog-content card glass-card">
+            <div class="dialog-header">
+                <h3><i class="fas fa-key"></i> Sarvam AI Platform Configuration</h3>
+                <button type="button" class="dialog-close" id="btn-close-key-dialog" aria-label="Close dialog">&times;</button>
+            </div>
+            <p class="dialog-desc">Powered by Sarvam AI. Enter your subscription key (<code>sk_...</code>) to enable oral archive transcription (<code>Saaras v4</code>), manuscript digitisation (<code>Sarvam Vision</code>), 22 Indian language translations (<code>Mayura v1</code>), cultural story generation (<code>Sarvam-105b</code>), and voice narration (<code>Bulbul v4-flash</code>).</p>
+            <div class="form-group">
+                <label for="input-api-key" class="form-label">Sarvam AI Subscription Key</label>
+                <div class="input-with-action">
+                    <input type="password" id="input-api-key" class="form-input" placeholder="sk_..." autocomplete="off">
+                    <button type="button" id="btn-toggle-key-visibility" class="btn btn-icon" title="Toggle visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <small class="form-hint">Stored securely in your project's <code>.env</code> file (<code>SARVAM_API_KEY</code>) or updated here.</small>
+            </div>
+            <div id="key-health-indicator" class="key-status-badge">
+                <i class="fas fa-circle-notch fa-spin"></i> Checking Sarvam AI status...
+            </div>
+            <div class="button-row" style="margin-top: 1.25rem;">
+                <button id="btn-save-key" class="btn btn-primary"><i class="fas fa-save"></i> Save Key</button>
+                <button id="btn-clear-key" class="btn btn-outline"><i class="fas fa-trash"></i> Remove</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="tab-navigation" role="tablist" aria-label="Main application tabs">
+        <div class="tab-list">
+            <button class="tab-btn active" data-tab="transcribe" role="tab" aria-selected="true" aria-controls="panel-transcribe">
+                <i class="fas fa-pen-nib"></i>
+                <span class="tab-label">Transcribe</span>
+            </button>
+            <button class="tab-btn" data-tab="translate" role="tab" aria-selected="false" aria-controls="panel-translate">
+                <i class="fas fa-language"></i>
+                <span class="tab-label">Translate</span>
+            </button>
+            <button class="tab-btn" data-tab="transform" role="tab" aria-selected="false" aria-controls="panel-transform">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <span class="tab-label">Transform</span>
+            </button>
+            <button class="tab-btn" data-tab="narrate" role="tab" aria-selected="false" aria-controls="panel-narrate">
+                <i class="fas fa-microphone-vintage"></i>
+                <span class="tab-label">Narrate</span>
+            </button>
+        </div>
+        <div class="tab-indicator" id="tab-indicator"></div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- ═══════════════ TRANSCRIBE TAB ═══════════════ -->
+        <section id="panel-transcribe" class="tab-panel active" role="tabpanel" aria-labelledby="tab-transcribe">
+            <div class="panel-header">
+                <h2><i class="fas fa-pen-nib"></i> Transcribe Manuscripts &amp; Audio</h2>
+                <p class="panel-description">Upload images of ancient manuscripts or audio recordings to extract their textual content.</p>
+            </div>
+
+            <!-- Curated Heritage Showcase -->
+            <div class="sample-showcase card glass-card mb-4">
+                <div class="sample-showcase-title">
+                    <i class="fas fa-landmark"></i> <span>Explore Curated Historic Manuscripts &amp; Archives (1-Click Load):</span>
+                </div>
+                <div class="sample-chips" id="sample-chips-transcribe">
+                    <span class="sample-loading"><i class="fas fa-spinner fa-spin"></i> Loading archives...</span>
+                </div>
+            </div>
+
+            <div class="card glass-card">
+                <!-- Dropzone -->
+                <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Click or drag files to upload">
+                    <div class="dropzone-content">
+                        <i class="fas fa-cloud-arrow-up dropzone-icon"></i>
+                        <p class="dropzone-title">Drop your files here</p>
+                        <p class="dropzone-hint">or <span class="dropzone-browse">browse</span> to upload</p>
+                        <p class="dropzone-formats"><i class="fas fa-image"></i> Images (JPG, PNG, TIFF, WebP) &nbsp;|&nbsp; <i class="fas fa-music"></i> Audio (MP3, WAV, M4A, OGG)</p>
+                    </div>
+                    <input type="file" id="file-input" class="file-input" accept="image/*,audio/*" aria-hidden="true">
+                </div>
+
+                <!-- File Preview -->
+                <div id="file-preview" class="file-preview hidden">
+                    <div class="preview-card">
+                        <div id="preview-image-container" class="preview-image-container hidden">
+                            <img id="preview-image" src="" alt="Uploaded manuscript preview">
+                        </div>
+                        <div id="preview-audio-container" class="preview-audio-container hidden">
+                            <i class="fas fa-file-audio preview-audio-icon"></i>
+                        </div>
+                        <div class="preview-info">
+                            <p id="preview-filename" class="preview-filename"></p>
+                            <p id="preview-filesize" class="preview-filesize"></p>
+                            <button id="remove-file" class="btn btn-sm btn-outline" title="Remove file">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Language Hint -->
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="transcribe-lang" class="form-label">Source language hint (optional)</label>
+                    <input type="text" id="transcribe-lang" class="form-input" placeholder="e.g., Sanskrit, Arabic, Latin…">
+                </div>
+
+                <!-- Transcribe Button -->
+                <button id="btn-transcribe" class="btn btn-primary btn-lg" disabled>
+                    <i class="fas fa-pen-nib"></i> Transcribe
+                </button>
+            </div>
+
+            <!-- Transcription Results -->
+            <div id="transcribe-results" class="results-container hidden">
+                <div class="card glass-card parchment-card">
+                    <div class="results-header">
+                        <h3><i class="fas fa-scroll"></i> Transcription Result</h3>
+                        <div class="results-actions">
+                            <button class="btn btn-sm btn-outline" id="btn-copy-transcription" title="Copy to clipboard">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div id="transcription-text" class="result-text parchment-text"></div>
+                    <div class="pass-actions">
+                        <button class="btn btn-secondary" id="btn-send-to-translate">
+                            <i class="fas fa-language"></i> Send to Translate
+                        </button>
+                        <button class="btn btn-secondary" id="btn-send-to-transform">
+                            <i class="fas fa-wand-magic-sparkles"></i> Send to Transform
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════ TRANSLATE TAB ═══════════════ -->
+        <section id="panel-translate" class="tab-panel" role="tabpanel" aria-labelledby="tab-translate">
+            <div class="panel-header">
+                <h2><i class="fas fa-language"></i> Translate Texts</h2>
+                <p class="panel-description">Translate historical texts between languages while preserving their cultural nuances.</p>
+            </div>
+
+            <div class="card glass-card">
+                <!-- Curated Archive Showcase -->
+                <div class="sample-showcase mb-3">
+                    <div class="sample-showcase-title">
+                        <i class="fas fa-book-atlas"></i> <span>Quick-Load Historic Text to Translate:</span>
+                    </div>
+                    <div class="sample-chips" id="sample-chips-translate"></div>
+                </div>
+
+                <div class="translate-grid">
+                    <!-- Source -->
+                    <div class="translate-column">
+                        <div class="form-group">
+                            <label for="source-lang" class="form-label">Source Language</label>
+                            <select id="source-lang" class="form-select">
+                                <option value="auto">Auto-detect</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="source-text" class="form-label">Source Text</label>
+                            <textarea id="source-text" class="form-textarea" rows="10" placeholder="Enter or paste the text to translate…"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Swap Button -->
+                    <div class="translate-swap">
+                        <button id="btn-swap-langs" class="btn btn-icon" title="Swap languages">
+                            <i class="fas fa-right-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Target -->
+                    <div class="translate-column">
+                        <div class="form-group">
+                            <label for="target-lang" class="form-label">Target Language</label>
+                            <select id="target-lang" class="form-select">
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Translation</label>
+                            <div id="translated-text" class="form-textarea result-text readonly-area" aria-readonly="true"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Context -->
+                <div class="form-group">
+                    <label for="translate-context" class="form-label">Historical context (optional)</label>
+                    <input type="text" id="translate-context" class="form-input" placeholder="e.g., 12th-century Mughal court poetry…">
+                </div>
+
+                <div class="button-row">
+                    <button id="btn-translate" class="btn btn-primary btn-lg">
+                        <i class="fas fa-language"></i> Translate
+                    </button>
+                    <button id="btn-copy-translation" class="btn btn-outline hidden" title="Copy translation">
+                        <i class="fas fa-copy"></i> Copy Translation
+                    </button>
+                    <button id="btn-translated-to-transform" class="btn btn-secondary hidden">
+                        <i class="fas fa-wand-magic-sparkles"></i> Send to Transform
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════ TRANSFORM TAB ═══════════════ -->
+        <section id="panel-transform" class="tab-panel" role="tabpanel" aria-labelledby="tab-transform">
+            <div class="panel-header">
+                <h2><i class="fas fa-wand-magic-sparkles"></i> Transform into Stories</h2>
+                <p class="panel-description">Turn historical content into engaging interactive stories, podcast scripts, or guided tours.</p>
+            </div>
+
+            <div class="card glass-card">
+                <!-- Curated Archive Showcase -->
+                <div class="sample-showcase mb-3">
+                    <div class="sample-showcase-title">
+                        <i class="fas fa-feather-pointed"></i> <span>Transform an Ancient Archive into an Experience:</span>
+                    </div>
+                    <div class="sample-chips" id="sample-chips-transform"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="story-input" class="form-label">Historical Content</label>
+                    <textarea id="story-input" class="form-textarea" rows="8" placeholder="Paste historical text, descriptions, or context here…"></textarea>
+                </div>
+
+                <!-- Format Selection -->
+                <div class="form-group">
+                    <label class="form-label">Choose a story format</label>
+                    <div class="format-cards">
+                        <div class="format-card selected" data-format="interactive_story">
+                            <div class="format-card-icon"><i class="fas fa-book-open"></i></div>
+                            <h4>Interactive Story</h4>
+                            <p>Branching narrative with choices — explore history as the protagonist.</p>
+                        </div>
+                        <div class="format-card" data-format="podcast_script">
+                            <div class="format-card-icon"><i class="fas fa-podcast"></i></div>
+                            <h4>Podcast Script</h4>
+                            <p>Multi-speaker dialogue — history told as an engaging conversation.</p>
+                        </div>
+                        <div class="format-card" data-format="guided_tour">
+                            <div class="format-card-icon"><i class="fas fa-map-location-dot"></i></div>
+                            <h4>Guided Tour</h4>
+                            <p>Location-based narrative — walk through history stop by stop.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="story-style" class="form-label">Narrative Style</label>
+                        <input type="text" id="story-style" class="form-input" placeholder="e.g., dramatic, educational, mystical…">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="story-lang" class="form-label">Output Language</label>
+                        <select id="story-lang" class="form-select">
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="btn-generate-story" class="btn btn-primary btn-lg">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate Story
+                </button>
+            </div>
+
+            <!-- Story Results -->
+            <div id="story-results" class="results-container hidden">
+                <div class="card glass-card">
+                    <div class="results-header">
+                        <h3 id="story-result-title"><i class="fas fa-book-open"></i> Your Story</h3>
+                        <div class="results-actions">
+                            <button class="btn btn-sm btn-outline" id="btn-copy-story" title="Copy story">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div id="story-content" class="story-display"></div>
+                    <div class="pass-actions">
+                        <button class="btn btn-secondary" id="btn-send-to-narrate">
+                            <i class="fas fa-microphone-vintage"></i> Narrate This
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════ NARRATE TAB ═══════════════ -->
+        <section id="panel-narrate" class="tab-panel" role="tabpanel" aria-labelledby="tab-narrate">
+            <div class="panel-header">
+                <h2><i class="fas fa-microphone-vintage"></i> Narrate</h2>
+                <p class="panel-description">Give voice to the past — generate lifelike narration of your historical stories.</p>
+            </div>
+
+            <div class="card glass-card">
+                <div class="form-group">
+                    <label for="narrate-text" class="form-label">Text to Narrate</label>
+                    <textarea id="narrate-text" class="form-textarea" rows="8" placeholder="Paste the story or text you'd like narrated…"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="voice-select" class="form-label">Voice</label>
+                        <select id="voice-select" class="form-select">
+                            <option value="">Loading voices…</option>
+                        </select>
+                        <p id="voice-description" class="form-hint"></p>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="narrate-style" class="form-label">Narration Style</label>
+                        <input type="text" id="narrate-style" class="form-input" placeholder="e.g., warm storytelling, dramatic narration…">
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button id="btn-narrate" class="btn btn-primary btn-lg">
+                        <i class="fas fa-play"></i> Generate Narration
+                    </button>
+                    <button id="btn-narrate-podcast" class="btn btn-secondary btn-lg hidden">
+                        <i class="fas fa-podcast"></i> Generate Podcast Audio
+                    </button>
+                </div>
+            </div>
+
+            <!-- Audio Player -->
+            <div id="narrate-results" class="results-container hidden">
+                <div class="card glass-card">
+                    <div class="results-header">
+                        <h3><i class="fas fa-headphones"></i> Your Narration</h3>
+                    </div>
+                    <div class="audio-player-wrapper">
+                        <audio id="narration-audio" controls class="audio-player"></audio>
+                    </div>
+                    <div class="button-row" style="margin-top: 1rem;">
+                        <a id="btn-download-audio" class="btn btn-secondary" download="narration.mp3">
+                            <i class="fas fa-download"></i> Download Audio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-ornament">
+            <span class="ornament-line"></span>
+            <i class="fas fa-om ornament-icon"></i>
+            <span class="ornament-line"></span>
+        </div>
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-scroll"></i> Heritage Storytelling Agent &mdash; Preserving the Past, Inspiring the Future
+            </p>
+            <p class="footer-sub">Powered by AI &middot; Built with reverence for history</p>
+        </div>
+        <div class="footer-ornament">
+            <span class="ornament-line"></span>
+            <i class="fas fa-dharmachakra ornament-icon"></i>
+            <span class="ornament-line"></span>
+        </div>
+    </footer>
+
+    <!-- App Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
